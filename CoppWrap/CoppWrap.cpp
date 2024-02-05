@@ -10,13 +10,14 @@
 // include context header file
 #include <libcopp/coroutine/coroutine_context_container.h>
 #include <coro/coro_wrap.hpp>
+#include <coro/awaitify.hpp>
 
 cw::ManualExecutor manualExecutor;
 cw::ThreadPool threadPool;
 cw::ThreadPool threadPoolBB;
 
 //
-template<typename Obj, typename MemFun, typename Fun>
+template <typename Obj, typename MemFun, typename Fun>
 void connect(Obj* obj, MemFun memFUn, Fun&& fun) {
     obj->_fun = fun;
 }
@@ -33,13 +34,13 @@ public:
 void taskFun(int sec) {
     runOn(threadPool);
     std::cout << "4 taskFun中执行耗时任务: " << std::this_thread::get_id() << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds{ sec });
+    std::this_thread::sleep_for(std::chrono::seconds{sec});
 }
 
 int main() {
     system("chcp 65001");
 
-    auto timeOut = cw::createCoroutineContext([](int sec) {
+    /*auto timeOut = cw::createCoroutineContext([](int sec) {
         await(cw::createCoroutineContext(taskFun), 3);
         std::cout << "5 taskFun执行完成: " << std::this_thread::get_id() << std::endl;
         runOn(threadPool);
@@ -66,12 +67,28 @@ int main() {
         std::cout << "8 切换到主线程操作: " << std::this_thread::get_id() << " checked: " << checked << std::endl;
     });
 
-    bitton.click(true);
+    bitton.click(true);*/
 
-    while (true) {
+    auto task1 = async::spawn([] {
+        std::cout << "exec task1" << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds{3});
+        std::cout << "Task 1 executes asynchronously" << std::endl;
+        return 100;
+    });
+
+    auto timeOut = cw::createCoroutineContext([&task1](int sec) {
+        auto rst = cw::await(task1);
+        std::cout << "5 taskFun执行完成: " << std::this_thread::get_id() << " rst: " << rst << std::endl;
+        runOn(threadPool);
+        std::cout << "6 timeOut中执行耗时任务: " << std::this_thread::get_id() << std::endl;
+    });
+
+    cw::sync_wait(timeOut, 2);
+    std::cout << "等待结束" << std::endl;
+    /*while (true) {
         manualExecutor.wait_for_task();
         manualExecutor.loop_once();
-    }
+    }*/
 
     return 0;
 }

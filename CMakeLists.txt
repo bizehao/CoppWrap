@@ -19,6 +19,7 @@ add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:MSVC>:/utf-8>
 
 add_subdirectory ("src/libcopp")
 add_subdirectory ("src/coro")
+add_subdirectory("third-party/asyncplusplus")
 
 # 包含子项目。
 add_subdirectory ("CoppWrap")

@@ -5,4 +5,4 @@ target_include_directories(coro INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(coro INTERFACE libcopp)
+target_link_libraries(coro INTERFACE libcopp Async++)
