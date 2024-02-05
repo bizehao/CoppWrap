@@ -1,0 +1,3 @@
+[submodule "third-party/asyncplusplus"]
+	path = third-party/asyncplusplus
+	url = https://github.com/bizehao/asyncplusplus.git
