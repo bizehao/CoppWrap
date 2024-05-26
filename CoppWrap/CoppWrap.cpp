@@ -4,13 +4,20 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+
 #include <coro/manual_executor.hpp>
 #include <coro/thread_pool.hpp>
-
-// include context header file
-#include <libcopp/coroutine/coroutine_context_container.h>
 #include <coro/coro_wrap.hpp>
 #include <coro/awaitify.hpp>
+
+#include <boost/context/fiber.hpp>
+#include <boost/context/continuation.hpp>
+#include <boost/asio.hpp>
+
+#include <chrono>
+#include <future>
+
+#include <format>
 
 cw::ManualExecutor manualExecutor;
 cw::ThreadPool threadPool;
@@ -37,16 +44,84 @@ void taskFun(int sec) {
     std::this_thread::sleep_for(std::chrono::seconds{sec});
 }
 
+using namespace std::chrono_literals;
+
+//#define My_Test
+
 int main() {
     system("chcp 65001");
 
-    /*auto timeOut = cw::createCoroutineContext([](int sec) {
+    /*namespace ctx = boost::context;
+    namespace asio = boost::asio;
+    asio::io_context io_context;
+    asio::thread_pool thread_pool;
+
+    auto work = asio::make_work_guard(io_context);
+
+    auto co1 = cw::createCoroutineContext([](int a, double b) {
+        std::cout << std::format("a: {}, b: {}", a, b) << std::endl;
+        int aa1 = 0;
+        cw::runOn(threadPool);
+        std::this_thread::sleep_for(3s);
+        int aa2 = 0;
+        cw::runOn(threadPoolBB);
+        int aa3 = 0;
+    });
+    co1.start(100, 3.14);
+
+    io_context.run();*/
+
+    // int data = 0;
+    // ctx::fiber f1{[&](ctx::fiber&& f2) {
+    //     std::cout << "f1: entered first time: " << data << std::endl;
+    //     data += 1;
+
+    //    f2 = std::move(f2).resume_with([&](ctx::fiber&& f3) {
+    //        //std::promise<void> promise;
+    //        //auto future = promise.get_future();
+    //        asio::post(io_context, [&]() {
+    //            f3 = std::move(f3).resume();
+    //            //promise.set_value();
+    //        });
+    //        //future.wait();
+    //        return std::move(f3);
+    //    });
+    //
+    //    std::this_thread::sleep_for(3s);
+    //    std::cout << "f1: entered second time: " << data << std::endl;
+    //    data += 1;
+    //    f2 = std::move(f2).resume();
+    //    std::cout << "f1: entered third time: " << data << std::endl;
+    //    return std::move(f2);
+    //}};
+    //
+    // asio::post(thread_pool, [&]() {
+    //    f1 = std::move(f1).resume();
+    //    std::cout << "f1: returned first time: " << data << std::endl;
+    //    data += 1;
+    //    f1 = std::move(f1).resume();
+    //    std::cout << "f1: returned second time: " << data << std::endl;
+    //    data += 1;
+
+    //    // yield
+    //    // resume in thread
+    //    f1 = std::move(f1).resume_with([&data](ctx::fiber&& f2) {
+    //        std::cout << "f2: entered: " << data << std::endl;
+    //        data = -1;
+    //        return std::move(f2);
+    //    });
+    //    std::cout << "f1: returned third time" << std::endl;
+    //});
+
+#ifdef My_Test
+
+    auto timeOut = cw::createCoroutineContext([](int sec) {
         await(cw::createCoroutineContext(taskFun), 3);
         std::cout << "5 taskFun执行完成: " << std::this_thread::get_id() << std::endl;
         runOn(threadPool);
         std::cout << "6 timeOut中执行耗时任务: " << std::this_thread::get_id() << std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds{ sec });
-        });
+        std::this_thread::sleep_for(std::chrono::seconds{sec});
+    });
 
     std::cout << "0 主线程: " << std::this_thread::get_id() << std::endl;
     Button bitton;
@@ -54,20 +129,21 @@ int main() {
         &bitton,
         &Button::click,
         Coro[timeOut](bool checked) {
-        std::cout << std::boolalpha;
-        std::cout << "1 在主线程操作: " << std::this_thread::get_id() << " checked: " << checked << std::endl;
-        checked = false;
-        runOn(threadPoolBB);
-        std::cout << "2 切换到子线程操作: " << std::this_thread::get_id() << " checked: " << checked << std::endl;
-        checked = true;
-        std::cout << "3 等待timeOut结束: " << std::this_thread::get_id() << " checked: " << checked << std::endl;
-        await(timeOut, 3);
-        std::cout << "7 timeOut结束了: " << std::this_thread::get_id() << " checked: " << checked << std::endl;
-        runOn(manualExecutor);
-        std::cout << "8 切换到主线程操作: " << std::this_thread::get_id() << " checked: " << checked << std::endl;
-    });
+            std::cout << std::boolalpha;
+            std::cout << "1 在主线程操作: " << std::this_thread::get_id() << " checked: " << checked << std::endl;
+            checked = false;
+            runOn(threadPoolBB);
+            std::cout << "2 切换到子线程操作: " << std::this_thread::get_id() << " checked: " << checked << std::endl;
+            checked = true;
+            std::cout << "3 等待timeOut结束: " << std::this_thread::get_id() << " checked: " << checked << std::endl;
+            await(timeOut, 3);
+            std::cout << "7 timeOut结束了: " << std::this_thread::get_id() << " checked: " << checked << std::endl;
+            runOn(manualExecutor);
+            std::cout << "8 切换到主线程操作: " << std::this_thread::get_id() << " checked: " << checked << std::endl;
+        });
 
-    bitton.click(true);*/
+    bitton.click(true);
+#endif // My_Test
 
     auto task1 = async::spawn([] {
         std::cout << "exec task1" << std::endl;
@@ -85,10 +161,13 @@ int main() {
 
     cw::sync_wait(timeOut, 2);
     std::cout << "等待结束" << std::endl;
-    /*while (true) {
+
+#ifdef My_Test
+    while (true) {
         manualExecutor.wait_for_task();
         manualExecutor.loop_once();
-    }*/
+    }
+#endif
 
     return 0;
 }

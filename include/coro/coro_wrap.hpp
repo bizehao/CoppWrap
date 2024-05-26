@@ -3,8 +3,11 @@
 #include <libcopp/coroutine/coroutine_context_container.h>
 #include <memory>
 #include "function_traits.hpp"
+#include <boost/context/fiber.hpp>
 
 namespace cw {
+
+namespace ctx = boost::context;
 
 class AbstractExecutor;
 class CoroutineContextBase;
@@ -25,31 +28,44 @@ class CoroutineContextBase {
     friend class AbstractExecutor;
 
 public:
+    CoroutineContextBase() {
+    }
     ~CoroutineContextBase() {
     }
     void resume() {
+
         thisCoro() = this;
-        _coObj->resume();
-        if (_coObj->check_flags(coroutine_type::status_type::EN_CRS_FINISHED)) {
-            _coObj = nullptr;
+        _source = std::move(_source).resume();
+        int aa = 100;
+
+        if (_yield_after_call) {
+            _yield_after_call();
+            _yield_after_call = nullptr;
         }
+
+        finish_callback();
     }
     void yield() {
         thisCoro() = nullptr;
-        _coObj->yield();
+        _source = std::move(_source).resume();
+
+        finish_callback();
     }
 
     void yield(std::function<void()> fun) {
         thisCoro() = nullptr;
-        _coObj->yield(std::move(fun));
+        _yield_after_call = std::move(fun);
+        _source = std::move(_source).resume();
+
+        finish_callback();
     }
 
     bool isFinished() {
-        return _coObj->is_finished();
+        return _is_run_finish;
     }
 
-    void addLastCallback(std::function<void()> callback) {
-        _lastCallbacks.push_back(std::move(callback));
+    void setLastCallback(std::function<void()> callback) {
+        _last_call = callback;
     }
 
     BaseAbstractExecutor* getExecutor() {
@@ -57,10 +73,20 @@ public:
     }
 
 protected:
-    using coroutine_type = copp::coroutine_context_default;
-    coroutine_type::ptr_t _coObj;
+
+    void finish_callback() {
+        if (_is_run_finish && _last_call) {
+            _last_call();
+        }
+    }
+
+    ctx::fiber _source;
     BaseAbstractExecutor* _executor{nullptr};
-    std::vector<std::function<void()>> _lastCallbacks;
+
+    std::function<void()> _yield_after_call;
+    std::function<void()> _last_call;
+
+    bool _is_run_finish{false};
 
     friend void runOn(BaseAbstractExecutor& executor);
 };
@@ -81,7 +107,7 @@ public:
     }
 
     ~CoroutineContext() {
-        // std::cout << "析构了" << std::endl;
+
     }
 
     void start(Args... args) {
@@ -95,35 +121,23 @@ public:
 
 private:
     void startAndOp(ArgsTup tup) {
-        if (_coObj) {
+        if (_source) {
             throw std::runtime_error{"Started multiple times"};
         }
-        _coObj = coroutine_type::create([self = getSelf()](void* data) {
-            // std::cout << "count1: " << self.use_count() << std::endl;
-            ArgsTup* tup = reinterpret_cast<ArgsTup*>(data);
+        _source = ctx::fiber{[self = getSelf(), &tup](ctx::fiber&& fiber) {
+            self->_source = std::move(fiber);
+
             self->invoke(self->_fun, tup, std::make_index_sequence<std::tuple_size_v<ArgsTup>>{});
-            // std::cout << "count2: " << self.use_count() << std::endl;
-            return 0;
-        });
-
-        if (!_lastCallbacks.empty()) {
-            _coObj->set_last_callback([self = getSelf()]() {
-                for (auto f : self->_lastCallbacks) {
-                    f();
-                }
-            });
-        }
-
-        thisCoro() = this;
-        _coObj->start(&tup);
-        if (_coObj->check_flags(coroutine_type::status_type::EN_CRS_FINISHED)) {
-            _coObj = nullptr;
-        }
+            
+            self->_is_run_finish = true;
+            return std::move(self->_source);
+        }};
+        resume();
     }
 
     template <typename Fun, typename Tup, size_t... I>
-    void invoke(Fun&& fun, Tup* tup, std::index_sequence<I...>) {
-        fun(std::get<I>(*tup)...);
+    void invoke(Fun&& fun, Tup&& tup, std::index_sequence<I...>) {
+        fun(std::get<I>(std::forward<Tup>(tup))...);
     }
 
     std::shared_ptr<CoroutineContext<std::tuple<Args...>>> getSelf() {
@@ -156,6 +170,10 @@ public:
 
     void start(std::tuple<Args...> tup) {
         coroPtr->start(tup);
+    }
+
+    void resume() {
+        coroPtr->resume();
     }
 
     void operator()(Args... args) {
@@ -197,7 +215,7 @@ void awaitImpl(std::shared_ptr<CoroutineContext<ArgsTup>> coroPtr,
     if (currentCoro == nullptr) {
         throw std::runtime_error{"currentCoro is null"};
     } else {
-        coroPtr->addLastCallback([currentCoro]() {
+        coroPtr->setLastCallback([currentCoro]() {
             if (currentCoro->getExecutor() != nullptr) {
                 currentCoro->getExecutor()->post([currentCoro]() {
                     currentCoro->resume();
@@ -229,6 +247,7 @@ void runOn(BaseAbstractExecutor& executor) {
     coro->_executor = &executor;
     coro->yield([coro, &executor]() {
         executor.post([coro]() {
+            int aa = 100;
             coro->resume();
         });
     });

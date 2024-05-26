@@ -11,7 +11,7 @@ template <typename T, typename... Args>
 void sync_wait(CoroutineContextPtr<T> coro, Args&&... args) {
     async::event_task<void> eventTask;
     auto task = eventTask.get_task();
-    coro->addLastCallback([&eventTask]() {
+    coro->setLastCallback([&eventTask]() {
         eventTask.set();
     });
     coro->start(std::forward<Args>(args)...);
