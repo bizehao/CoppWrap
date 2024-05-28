@@ -36,7 +36,6 @@ public:
 
         thisCoro() = this;
         _source = std::move(_source).resume();
-        int aa = 100;
 
         if (_yield_after_call) {
             _yield_after_call();
@@ -45,14 +44,9 @@ public:
 
         finish_callback();
     }
-    void yield() {
-        thisCoro() = nullptr;
-        _source = std::move(_source).resume();
 
-        finish_callback();
-    }
-
-    void yield(std::function<void()> fun) {
+    //恢复到切入点的时侯 call fun
+    void yield(std::function<void()> fun = nullptr) {
         thisCoro() = nullptr;
         _yield_after_call = std::move(fun);
         _source = std::move(_source).resume();
@@ -247,7 +241,6 @@ void runOn(BaseAbstractExecutor& executor) {
     coro->_executor = &executor;
     coro->yield([coro, &executor]() {
         executor.post([coro]() {
-            int aa = 100;
             coro->resume();
         });
     });

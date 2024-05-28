@@ -51,6 +51,31 @@ using namespace std::chrono_literals;
 int main() {
     system("chcp 65001");
 
+    namespace ctx = boost::context;
+    int data = 0;
+    ctx::fiber f1{[&data](ctx::fiber&& f2) {
+        std::cout << "f1: entered first time: " << data << std::endl;
+        data += 1;
+        f2 = std::move(f2).resume();
+        std::cout << "f1: entered second time: " << data << std::endl;
+        data += 1;
+        f2 = std::move(f2).resume();
+        std::cout << "f1: entered third time: " << data << std::endl;
+        return std::move(f2);
+    }};
+    f1 = std::move(f1).resume();
+    std::cout << "f1: returned first time: " << data << std::endl;
+    data += 1;
+    f1 = std::move(f1).resume();
+    std::cout << "f1: returned second time: " << data << std::endl;
+    data += 1;
+    f1 = std::move(f1).resume_with([&data](ctx::fiber&& f2) {
+        std::cout << "f2: entered: " << data << std::endl;
+        data = -1;
+        return std::move(f2);
+    });
+    std::cout << "f1: returned third time" << std::endl;
+
     /*namespace ctx = boost::context;
     namespace asio = boost::asio;
     asio::io_context io_context;
@@ -70,48 +95,6 @@ int main() {
     co1.start(100, 3.14);
 
     io_context.run();*/
-
-    // int data = 0;
-    // ctx::fiber f1{[&](ctx::fiber&& f2) {
-    //     std::cout << "f1: entered first time: " << data << std::endl;
-    //     data += 1;
-
-    //    f2 = std::move(f2).resume_with([&](ctx::fiber&& f3) {
-    //        //std::promise<void> promise;
-    //        //auto future = promise.get_future();
-    //        asio::post(io_context, [&]() {
-    //            f3 = std::move(f3).resume();
-    //            //promise.set_value();
-    //        });
-    //        //future.wait();
-    //        return std::move(f3);
-    //    });
-    //
-    //    std::this_thread::sleep_for(3s);
-    //    std::cout << "f1: entered second time: " << data << std::endl;
-    //    data += 1;
-    //    f2 = std::move(f2).resume();
-    //    std::cout << "f1: entered third time: " << data << std::endl;
-    //    return std::move(f2);
-    //}};
-    //
-    // asio::post(thread_pool, [&]() {
-    //    f1 = std::move(f1).resume();
-    //    std::cout << "f1: returned first time: " << data << std::endl;
-    //    data += 1;
-    //    f1 = std::move(f1).resume();
-    //    std::cout << "f1: returned second time: " << data << std::endl;
-    //    data += 1;
-
-    //    // yield
-    //    // resume in thread
-    //    f1 = std::move(f1).resume_with([&data](ctx::fiber&& f2) {
-    //        std::cout << "f2: entered: " << data << std::endl;
-    //        data = -1;
-    //        return std::move(f2);
-    //    });
-    //    std::cout << "f1: returned third time" << std::endl;
-    //});
 
 #ifdef My_Test
 
