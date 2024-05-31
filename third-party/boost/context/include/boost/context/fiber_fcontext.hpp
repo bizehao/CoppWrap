@@ -20,9 +20,8 @@
 #include <tuple>
 #include <utility>
 
-#include <boost/assert.hpp>
-#include <boost/config.hpp>
-#include <boost/intrusive_ptr.hpp>
+#include <cassert>
+#include <boost/context/detail/intrusive_ptr.hpp>
 
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
 #include <boost/context/detail/exchange.hpp>
@@ -294,7 +293,7 @@ public:
 #endif
 
     ~fiber() {
-        if ( BOOST_UNLIKELY( nullptr != fctx_) ) {
+        if ( nullptr != fctx_ ) {
             detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
@@ -311,7 +310,7 @@ public:
     }
 
     fiber & operator=( fiber && other) noexcept {
-        if ( BOOST_LIKELY( this != & other) ) {
+        if ( this != & other ) {
             fiber tmp = std::move( other);
             swap( tmp);
         }
@@ -322,7 +321,7 @@ public:
     fiber & operator=( fiber const& other) noexcept = delete;
 
     fiber resume() && {
-        BOOST_ASSERT( nullptr != fctx_);
+        assert( nullptr != fctx_);
         return { detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),

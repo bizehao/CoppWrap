@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include <libcopp/coroutine/coroutine_context_container.h>
 #include <memory>
 #include "function_traits.hpp"
 #include <boost/context/fiber.hpp>

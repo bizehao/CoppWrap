@@ -7,14 +7,10 @@
 #ifndef BOOST_CONTEXT_DETAIL_EXCEPTION_H
 #define BOOST_CONTEXT_DETAIL_EXCEPTION_H
 
-#include <boost/assert.hpp>
-#include <boost/config.hpp>
+#include <cassert>
 
 #include <boost/context/detail/fcontext.hpp>
 
-#ifdef BOOST_HAS_ABI_HEADERS
-# include BOOST_ABI_PREFIX
-#endif
 
 namespace boost {
 namespace context {
@@ -32,8 +28,5 @@ struct forced_unwind {
 
 }}}
 
-#ifdef BOOST_HAS_ABI_HEADERS
-#include BOOST_ABI_SUFFIX
-#endif
 
 #endif // BOOST_CONTEXT_DETAIL_EXCEPTION_H

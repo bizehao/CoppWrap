@@ -9,13 +9,8 @@
 
 #include <type_traits>
 
-#include <boost/config.hpp>
-
 #include <boost/context/detail/config.hpp>
 
-#ifdef BOOST_HAS_ABI_HEADERS
-# include BOOST_ABI_PREFIX
-#endif
 
 namespace boost {
 namespace context {
@@ -33,8 +28,5 @@ using disable_overload =
 
 }}}
 
-#ifdef BOOST_HAS_ABI_HEADERS
-#include BOOST_ABI_SUFFIX
-#endif
 
 #endif // BOOST_CONTEXT_DETAIL_DISABLE_OVERLOAD_H

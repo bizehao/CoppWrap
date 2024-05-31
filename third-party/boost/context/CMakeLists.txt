@@ -2,11 +2,9 @@
 # Distributed under the Boost Software License, Version 1.0.
 # https://www.boost.org/LICENSE_1_0.txt
 
-cmake_minimum_required(VERSION 3.5...3.16)
+cmake_minimum_required(VERSION 3.25)
 
 project(boost_context VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
-
-list(APPEND CMAKE_MODULE_PATH ${boost_context_SOURCE_DIR}/cmake)
 
 # Build features
 
@@ -203,17 +201,6 @@ add_library(Boost::context ALIAS boost_context)
 
 target_include_directories(boost_context PUBLIC include)
 
-target_link_libraries(boost_context
-  PUBLIC
-    Boost::assert
-    Boost::config
-    Boost::core
-    Boost::mp11
-    Boost::pool
-    Boost::predef
-    Boost::smart_ptr
-)
-
 # ATTENTION. Some assemblers are picky to get --defsym,KEY=VALUE pairs where '=' is non-optional!
 # Be sure all defines have the '=' character. Overkill solution: always put '=' throughout this module.
 
@@ -234,10 +221,4 @@ endif()
 
 if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "winfib")
   target_compile_definitions(boost_context PUBLIC BOOST_USE_WINFIB=)
-endif()
-
-if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
-
-  add_subdirectory(test)
-
 endif()

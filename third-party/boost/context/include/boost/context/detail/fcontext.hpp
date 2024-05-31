@@ -7,14 +7,8 @@
 #ifndef BOOST_CONTEXT_DETAIL_FCONTEXT_H
 #define BOOST_CONTEXT_DETAIL_FCONTEXT_H
 
-#include <boost/config.hpp>
-#include <boost/cstdint.hpp>
-
 #include <boost/context/detail/config.hpp>
 
-#ifdef BOOST_HAS_ABI_HEADERS
-# include BOOST_ABI_PREFIX
-#endif
 
 namespace boost {
 namespace context {
@@ -38,9 +32,6 @@ transfer_t BOOST_CONTEXT_CALLDECL ontop_fcontext( fcontext_t const to, void * vp
 
 }}}
 
-#ifdef BOOST_HAS_ABI_HEADERS
-# include BOOST_ABI_SUFFIX
-#endif
 
 #endif // BOOST_CONTEXT_DETAIL_FCONTEXT_H
 

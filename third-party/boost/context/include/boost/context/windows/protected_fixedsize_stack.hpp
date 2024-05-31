@@ -15,17 +15,11 @@ extern "C" {
 #include <cstddef>
 #include <new>
 
-#include <boost/assert.hpp>
-#include <boost/config.hpp>
-#include <boost/core/ignore_unused.hpp>
+#include <cassert>
 
 #include <boost/context/detail/config.hpp>
 #include <boost/context/stack_context.hpp>
 #include <boost/context/stack_traits.hpp>
-
-#ifdef BOOST_HAS_ABI_HEADERS
-#  include BOOST_ABI_PREFIX
-#endif
 
 namespace boost {
 namespace context {
@@ -54,8 +48,8 @@ public:
         DWORD old_options;
         const BOOL result = ::VirtualProtect(
             vp, traits_type::page_size(), PAGE_READWRITE | PAGE_GUARD /*PAGE_NOACCESS*/, & old_options);
-        boost::ignore_unused(result);
-        BOOST_ASSERT( FALSE != result);
+        (void)(result);
+        assert(FALSE != result);
 
         stack_context sctx;
         sctx.size = size__;
@@ -64,7 +58,7 @@ public:
     }
 
     void deallocate( stack_context & sctx) BOOST_NOEXCEPT_OR_NOTHROW {
-        BOOST_ASSERT( sctx.sp);
+        assert( sctx.sp);
 
         void * vp = static_cast< char * >( sctx.sp) - sctx.size;
         ::VirtualFree( vp, 0, MEM_RELEASE);
@@ -75,8 +69,5 @@ typedef basic_protected_fixedsize_stack< stack_traits > protected_fixedsize_stac
 
 }}
 
-#ifdef BOOST_HAS_ABI_HEADERS
-#  include BOOST_ABI_SUFFIX
-#endif
 
 #endif // BOOST_CONTEXT_PROTECTED_FIXEDSIZE_H

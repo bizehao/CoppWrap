@@ -17,8 +17,9 @@ project ("CoppWrap")
 add_compile_options("$<$<COMPILE_LANGUAGE:C>:$<$<C_COMPILER_ID:MSVC>:/utf-8>>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:MSVC>:/utf-8>>")
 
-add_subdirectory ("src/libcopp")
+
 add_subdirectory ("src/coro")
+add_subdirectory ("third-party/boost/context")
 add_subdirectory("third-party/asyncplusplus")
 
 # 包含子项目。

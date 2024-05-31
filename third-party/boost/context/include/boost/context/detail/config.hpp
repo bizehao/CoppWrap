@@ -10,21 +10,11 @@
 // required for SD-6 compile-time integer sequences
 #include <utility>
 
-#include <boost/config.hpp>
-#include <boost/detail/workaround.hpp>
+#define BOOST_HAS_DECLSPEC
+#define BOOST_SYMBOL_EXPORT __declspec(dllexport)
+#define BOOST_SYMBOL_IMPORT __declspec(dllimport)
 
-#ifdef BOOST_CONTEXT_DECL
-# undef BOOST_CONTEXT_DECL
-#endif
-
-#if (defined(BOOST_ALL_DYN_LINK) || defined(BOOST_CONTEXT_DYN_LINK) ) && ! defined(BOOST_CONTEXT_STATIC_LINK)
-# if defined(BOOST_CONTEXT_SOURCE)
-#  define BOOST_CONTEXT_DECL BOOST_SYMBOL_EXPORT
-#  define BOOST_CONTEXT_BUILD_DLL
-# else
-#  define BOOST_CONTEXT_DECL BOOST_SYMBOL_IMPORT
-# endif
-#endif
+#  define BOOST_CONTEXT_DECL //BOOST_SYMBOL_IMPORT
 
 #if ! defined(BOOST_CONTEXT_DECL)
 # define BOOST_CONTEXT_DECL
