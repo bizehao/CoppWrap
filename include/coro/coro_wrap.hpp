@@ -69,8 +69,11 @@ public:
 protected:
 
     void finish_callback() {
-        if (_is_run_finish && _last_call) {
-            _last_call();
+        if (_is_run_finish){
+            if (_last_call) {
+                _last_call();
+            }
+            _prolong_life.reset();
         }
     }
 
@@ -81,6 +84,8 @@ protected:
     std::function<void()> _last_call;
 
     bool _is_run_finish{false};
+
+    std::shared_ptr<CoroutineContextBase> _prolong_life;
 
     friend void runOn(BaseAbstractExecutor& executor);
 };
@@ -124,6 +129,7 @@ private:
             self->invoke(self->_fun, tup, std::make_index_sequence<std::tuple_size_v<ArgsTup>>{});
             
             self->_is_run_finish = true;
+            self->_prolong_life = self;
             return std::move(self->_source);
         }};
         resume();
