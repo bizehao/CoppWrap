@@ -51,7 +51,7 @@ using namespace std::chrono_literals;
 int main() {
     system("chcp 65001");
 
-    namespace ctx = boost::context;
+    /*namespace ctx = boost::context;
     int data = 0;
     ctx::fiber f1{[&data](ctx::fiber&& f2) {
         std::cout << "f1: entered first time: " << data << std::endl;
@@ -74,27 +74,30 @@ int main() {
         data = -1;
         return std::move(f2);
     });
-    std::cout << "f1: returned third time" << std::endl;
+    std::cout << "f1: returned third time" << std::endl;*/
 
-    /*namespace ctx = boost::context;
+    namespace ctx = boost::context;
     namespace asio = boost::asio;
     asio::io_context io_context;
     asio::thread_pool thread_pool;
 
     auto work = asio::make_work_guard(io_context);
 
-    auto co1 = cw::createCoroutineContext([](int a, double b) {
-        std::cout << std::format("a: {}, b: {}", a, b) << std::endl;
-        int aa1 = 0;
-        cw::runOn(threadPool);
-        std::this_thread::sleep_for(3s);
-        int aa2 = 0;
-        cw::runOn(threadPoolBB);
-        int aa3 = 0;
-    });
-    co1.start(100, 3.14);
+    {
+        auto co1 = cw::createCoroutineContext([](int a, double b) {
+            std::cout << std::format("a: {}, b: {}", a, b) << std::endl;
+            cw::runOn(threadPool);
+            std::cout << "start exec task" << std::endl;
+            std::this_thread::sleep_for(3s);
+            std::cout << "task finish" << std::endl;
+            cw::runOn(threadPoolBB);
+            std::cout << "exit" << std::endl;
+        });
+        co1.start(100, 3.14);
+    }
+    
 
-    io_context.run();*/
+    io_context.run();
 
 #ifdef My_Test
 
@@ -128,22 +131,22 @@ int main() {
     bitton.click(true);
 #endif // My_Test
 
-    auto task1 = async::spawn([] {
-        std::cout << "exec task1" << std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds{3});
-        std::cout << "Task 1 executes asynchronously" << std::endl;
-        return 100;
-    });
+    //auto task1 = async::spawn([] {
+    //    std::cout << "exec task1" << std::endl;
+    //    std::this_thread::sleep_for(std::chrono::seconds{3});
+    //    std::cout << "Task 1 executes asynchronously" << std::endl;
+    //    return 100;
+    //});
 
-    auto timeOut = cw::createCoroutineContext([&task1](int sec) {
-        auto rst = cw::await(task1);
-        std::cout << "5 taskFun执行完成: " << std::this_thread::get_id() << " rst: " << rst << std::endl;
-        runOn(threadPool);
-        std::cout << "6 timeOut中执行耗时任务: " << std::this_thread::get_id() << std::endl;
-    });
+    //auto timeOut = cw::createCoroutineContext([&task1](int sec) {
+    //    auto rst = cw::await(task1);
+    //    std::cout << "5 taskFun执行完成: " << std::this_thread::get_id() << " rst: " << rst << std::endl;
+    //    runOn(threadPool);
+    //    std::cout << "6 timeOut中执行耗时任务: " << std::this_thread::get_id() << std::endl;
+    //});
 
-    cw::sync_wait(timeOut, 2);
-    std::cout << "等待结束" << std::endl;
+    //cw::sync_wait(timeOut, 2);
+    //std::cout << "等待结束" << std::endl;
 
 #ifdef My_Test
     while (true) {
