@@ -36,7 +36,18 @@ int main()
 
     system("chcp 65001");
 
-    cw::ManualExecutor manualExecutor;
+    ctx::fiber f1{ [&](ctx::fiber&& f2) {
+        std::cout << "111" << std::endl;
+        return std::move(f2);
+    } };
+    std::cout << "000" << std::endl;
+    std::move(f1).resume();
+    std::cout << "222" << std::endl;
+
+    //f1();
+
+
+    /*cw::ManualExecutor manualExecutor;
     cw::ThreadPool threadPool{ 1 };
 
     ctx::fiber f1{ [&](ctx::fiber&& f2) {
@@ -63,7 +74,7 @@ int main()
     {
         manualExecutor.wait_for_task();
         manualExecutor.loop_once();
-    }
+    }*/
 
     return 0;
 }

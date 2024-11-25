@@ -4,7 +4,7 @@
 
 function(custom_test cpp_file)
 	# 将源代码添加到此项目的可执行文件。
-	add_executable (${cpp_file} "${cpp_file}.cpp" "test2.cpp")
+	add_executable (${cpp_file} "${cpp_file}.cpp")
 
 	set_property(TARGET ${cpp_file} PROPERTY CXX_STANDARD 17)
 

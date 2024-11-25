@@ -41,43 +41,32 @@ namespace cw
         void resume()
         {
             thisCoro() = this;
-            _enter_source = std::move(_output_source).resume();
+            _source = std::move(_source).resume();
+            if (_yield_after_call)
+            {   
+                std::function<void()> exec = std::move(_yield_after_call);
+                exec();
+            }
             finish_callback();
         }
 
         // 恢复到切入点的时侯 call fun
-        /*void yield(std::function<void()> fun = nullptr)
+        void yield(std::function<void()> fun = nullptr)
         {
             thisCoro() = nullptr;
-            _source = std::move(_source).resume_with([fun = std::move(fun)](ctx::fiber&& fc) {
-                fun();
-                return std::move(fc);
-            });
-            finish_callback();
-        }*/
-
-        void yield()
-        {
-            thisCoro() = nullptr;
-            _output_source = std::move(_enter_source).resume();
-            finish_callback();
-        }
-
-        void yield(std::function<ctx::fiber(ctx::fiber&&)> fun)
-        {
-            thisCoro() = nullptr;
-            _output_source = std::move(_enter_source).resume_with(std::move(fun));
+            _yield_after_call = std::move(fun);
+            _source = std::move(_source).resume();
             finish_callback();
         }
 
         bool isFinished()
         {
-            return _is_finished;
+            return !_source;
         }
 
         void setLastCallback(std::function<void()> callback)
         {
-            _last_call = callback;
+            _last_call = std::move(callback);
         }
 
         BaseAbstractExecutor* getExecutor()
@@ -87,28 +76,8 @@ namespace cw
 
         void destory()
         {
-            _output_source = {};
+            _source = {};
             finish_callback();
-        }
-
-        void setEnterFiber(ctx::fiber&& f)
-        {
-            _enter_source = std::move(f);
-        }
-
-        void setOutputFiber(ctx::fiber&& f)
-        {
-            _output_source = std::move(f);
-        }
-
-        void setLastFiber(ctx::fiber&& f)
-        {
-            _last_resume = std::move(f);
-        }
-
-        ctx::fiber getLastFiber()
-        {
-            return std::move(_last_resume);
         }
 
     protected:
@@ -124,11 +93,9 @@ namespace cw
             }
         }
 
-        ctx::fiber _enter_source; //进入
-        ctx::fiber _output_source; //出去
-        ctx::fiber _last_resume;
+        ctx::fiber _source;
+        std::function<void()> _yield_after_call;
         BaseAbstractExecutor* _executor{ nullptr };
-        bool _is_finished{ false };
         std::function<void()> _last_call;
         std::shared_ptr<CoroutineContextBase> _prolong_life;
         friend void runOn(BaseAbstractExecutor& executor);
@@ -168,16 +135,15 @@ namespace cw
     private:
         void startAndOp(ArgsTup tup)
         {
-            if (_output_source)
+            if (_source)
             {
                 throw std::runtime_error{ "Started multiple times" };
             }
-            _output_source = ctx::fiber{ [self = getSelf(), &tup](ctx::fiber&& fiber) {
-                self->_enter_source = std::move(fiber);
+            _source = ctx::fiber{ [self = getSelf(), &tup](ctx::fiber&& fiber) {
+                self->_source = std::move(fiber);
                 self->_prolong_life = self;
                 self->invoke(self->_fun, tup, std::make_index_sequence<std::tuple_size_v<ArgsTup>>{});
-                self->_is_finished = true;
-                return std::move(self->_enter_source);
+                return std::move(self->_source);
             } };
             resume();
         }
@@ -279,26 +245,21 @@ namespace cw
             }
             else
             {
-                coroPtr->setLastCallback([coroPtr, currentCoro]() {
+                coroPtr->setLastCallback([currentCoro]() {
                     if (currentCoro->getExecutor() != nullptr)
                     {
-                        currentCoro->getExecutor()->post([currentCoro, coroPtr]() {
-                            currentCoro->setOutputFiber(coroPtr->getLastFiber());
+                        currentCoro->getExecutor()->post([currentCoro]() {
                             currentCoro->resume();
                         });
                     }
                     else
                     {
-                        currentCoro->setOutputFiber(coroPtr->getLastFiber());
                         currentCoro->resume();
                     }
                 });
                 ArgsTup data = std::forward_as_tuple(args...);
-
-                currentCoro->yield([=](ctx::fiber&& f) {
-                    currentCoro->setLastFiber(std::move(f));
+                currentCoro->yield([=]() {
                     coroPtr->start(data);
-                    return ctx::fiber{};
                 });
             }
         }
@@ -321,13 +282,10 @@ namespace cw
         CoroutineContextBase* coro = thisCoro();
         coro->_executor = &executor;
 
-        coro->yield([coro, &executor](ctx::fiber&& f) {
-            auto mw_f = folly::makeMoveWrapper(std::move(f));
-            executor.post([mw_f, coro]() mutable {
-                thisCoro() = coro;
-                coro->setEnterFiber(mw_f.move().resume());
+        coro->yield([coro, &executor]() {
+            executor.post([coro]() {
+                coro->resume();
             });
-            return ctx::fiber{};
         });
     }
 

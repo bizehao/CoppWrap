@@ -59,17 +59,19 @@ int main()
 
     {
         sync_count{} << "主线程: " << std::this_thread::get_id() << std::endl;
-        for (int i = 0; i < 1; i++)
+        for (int i = 0; i < 3000; i++)
         {
             auto timeOut = cw::createCoroutineContext([](int sec) {
-                std::this_thread::sleep_for(std::chrono::seconds{ sec });
+                sync_count{} << "执行: " << std::this_thread::get_id() << std::endl;
+                std::this_thread::sleep_for(std::chrono::milliseconds{ sec });
+                sync_count{} << "结束: " << std::this_thread::get_id() << std::endl;
             });
 
             auto asyncHandle = cw::createCoroutineContext([](std::string arg) {
                 runOn(threadPoolC);
                 sync_count{} << "开始处理异步任务: " << std::this_thread::get_id() << std::endl;
                 sync_count{} << "参数: " << arg << std::endl;
-                std::this_thread::sleep_for(std::chrono::seconds{ 3 });
+                std::this_thread::sleep_for(100ms);
                 sync_count{} << "结束处理异步任务: " << std::this_thread::get_id() << std::endl;
             });
 
@@ -83,7 +85,7 @@ int main()
                     sync_count{} << "切换到子线程A: " << std::this_thread::get_id() << std::endl;
                     runOn(threadPoolB);
                     sync_count{} << "切换到子线程B: " << std::this_thread::get_id() << std::endl;
-                    await(timeOut, 3);
+                    await(timeOut, 50);
                     sync_count{} << "等待了3s, 继续在线程B: " << std::this_thread::get_id() << std::endl;
                     runOn(manualExecutor);
                     sync_count{} << "当前在主线程：" << std::this_thread::get_id() << std::endl;
