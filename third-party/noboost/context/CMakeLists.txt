@@ -4,7 +4,7 @@
 
 cmake_minimum_required(VERSION 3.25)
 
-project(boost_context VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
+project(noboost_context VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 
 # Build features
 
@@ -175,11 +175,6 @@ if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
   endif()
-else()
-  set(IMPL_SOURCES
-    src/continuation.cpp
-    src/fiber.cpp
-  )
 endif()
 
 if(WIN32 AND NOT CMAKE_CXX_PLATFORM_ID MATCHES "Cygwin")
@@ -192,40 +187,41 @@ else()
   )
 endif()
 
-add_library(boost_context
+add_library(noboost_context
   ${IMPL_SOURCES}
   ${STACK_TRAITS_SOURCES}
+  src/fcontext.cpp
 )
 
-add_library(Boost::context ALIAS boost_context)
+add_library(NoBoost::context ALIAS noboost_context)
 
-target_include_directories(boost_context PUBLIC include)
+target_include_directories(noboost_context PUBLIC include)
 
 # ATTENTION. Some assemblers are picky to get --defsym,KEY=VALUE pairs where '=' is non-optional!
 # Be sure all defines have the '=' character. Overkill solution: always put '=' throughout this module.
 
-target_compile_definitions(boost_context
+target_compile_definitions(noboost_context
   PUBLIC BOOST_CONTEXT_NO_LIB=
   PRIVATE BOOST_CONTEXT_SOURCE=
 )
 
 if(BUILD_SHARED_LIBS)
-  target_compile_definitions(boost_context PUBLIC BOOST_CONTEXT_DYN_LINK= BOOST_CONTEXT_EXPORT=EXPORT)
+  target_compile_definitions(noboost_context PUBLIC BOOST_CONTEXT_DYN_LINK= BOOST_CONTEXT_EXPORT=EXPORT)
 else()
-  target_compile_definitions(boost_context PUBLIC BOOST_CONTEXT_STATIC_LINK= BOOST_CONTEXT_EXPORT=)
+  target_compile_definitions(noboost_context PUBLIC BOOST_CONTEXT_STATIC_LINK= BOOST_CONTEXT_EXPORT=)
 endif()
 
 if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "ucontext")
-  target_compile_definitions(boost_context PUBLIC BOOST_USE_UCONTEXT=)
+  target_compile_definitions(noboost_context PUBLIC BOOST_USE_UCONTEXT=)
 endif()
 
 if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "winfib")
-  target_compile_definitions(boost_context PUBLIC BOOST_USE_WINFIB=)
+  target_compile_definitions(noboost_context PUBLIC BOOST_USE_WINFIB=)
 endif()
 
 if(WIN32)
-  target_compile_definitions(boost_context PUBLIC NOMINMAX BOOST_WINDOWS _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
+  target_compile_definitions(noboost_context PUBLIC NOMINMAX BOOST_WINDOWS _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 endif()
 if(MSVC)
-  target_compile_definitions(boost_context PUBLIC BOOST_MSVC)
+  target_compile_definitions(noboost_context PUBLIC BOOST_MSVC)
 endif()

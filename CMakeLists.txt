@@ -11,6 +11,8 @@ endif()
 
 project ("CoppWrap") 
 
+option(enable_test "enable some custom test" ON)
+
 add_compile_options("$<$<COMPILE_LANGUAGE:C>:$<$<C_COMPILER_ID:MSVC>:/utf-8>>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:MSVC>:/utf-8>>")
 
@@ -21,3 +23,7 @@ add_subdirectory("third-party/asyncplusplus")
 
 # 包含子项目。
 add_subdirectory ("CoppWrap")
+
+if(enable_test)
+	add_subdirectory ("test")
+endif()
