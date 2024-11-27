@@ -30,18 +30,23 @@ T await(async::task<T>& task) {
     if (currentCoro == nullptr) {
         throw std::runtime_error{"currentCoro is null"};
     } else {
-        task.then([currentCoro, &value](T v) {
-            value = v;
-            if (currentCoro->getExecutor() != nullptr) {
-                currentCoro->getExecutor()->post([currentCoro]() {
+        currentCoro->yield([currentCoro, &value]()
+            {
+            task.then([currentCoro, &value](T v) {
+                value = v;
+                if (currentCoro->getExecutor() != nullptr)
+                {
+                    currentCoro->getExecutor()->post([currentCoro]() {
+                        currentCoro->resume();
+                    });
+                }
+                else
+                {
                     currentCoro->resume();
-                });
-            } else {
-                currentCoro->resume();
-            }
-            
-        });
-        currentCoro->yield();
+                }
+            });
+
+            });
     }
     return value;
 }

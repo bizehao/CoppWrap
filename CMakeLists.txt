@@ -9,17 +9,21 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
-project ("CoppWrap")
+project ("CoppWrap") 
 
-#add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:MSVC>:/utf-8>>")
-#add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>>")
+option(enable_test "enable some custom test" ON)
 
 add_compile_options("$<$<COMPILE_LANGUAGE:C>:$<$<C_COMPILER_ID:MSVC>:/utf-8>>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:MSVC>:/utf-8>>")
 
-add_subdirectory ("src/libcopp")
+
 add_subdirectory ("src/coro")
+add_subdirectory ("third-party/noboost/context")
 add_subdirectory("third-party/asyncplusplus")
 
 # 包含子项目。
 add_subdirectory ("CoppWrap")
+
+if(enable_test)
+	add_subdirectory ("test")
+endif()

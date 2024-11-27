@@ -5,7 +5,7 @@
 # 将源代码添加到此项目的可执行文件。
 add_executable (CoppWrap "CoppWrap.cpp" "CoppWrap.h")
 
-set_property(TARGET CoppWrap PROPERTY CXX_STANDARD 20)
+set_property(TARGET CoppWrap PROPERTY CXX_STANDARD 17)
 
 target_link_libraries(CoppWrap PRIVATE coro)
 
