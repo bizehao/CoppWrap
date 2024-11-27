@@ -59,7 +59,7 @@ int main()
 
     {
         sync_count{} << "主线程: " << std::this_thread::get_id() << std::endl;
-        for (int i = 0; i < 3000; i++)
+        /*for (int i = 0; i < 5000; i++)
         {
             auto timeOut = cw::createCoroutineContext([](int sec) {
                 sync_count{} << "执行: " << std::this_thread::get_id() << std::endl;
@@ -79,7 +79,7 @@ int main()
             connect(
                 &bitton,
                 &Button::click,
-                Coro[timeOut, asyncHandle](bool checked) {
+                Coro[timeOut, asyncHandle, i](bool checked) {
                     sync_count{} << "当前在主线程: " << std::this_thread::get_id() << std::endl;
                     runOn(threadPoolA);
                     sync_count{} << "切换到子线程A: " << std::this_thread::get_id() << std::endl;
@@ -90,12 +90,32 @@ int main()
                     runOn(manualExecutor);
                     sync_count{} << "当前在主线程：" << std::this_thread::get_id() << std::endl;
                     await(asyncHandle, std::string{ "一些参数" });
-                    sync_count{} << "返回到主线程：" << std::this_thread::get_id() << std::endl;
+                    sync_count{} << "返回到主线程：" << i << " ========" << std::this_thread::get_id() << std::endl;
                 });
 
             bitton.click(true);
-        }
-        
+        }*/
+
+        auto test1 = cw::createCoroutineContext([](std::string arg) {
+            sync_count{} << "主线程 获取界面上的数据==>" << std::this_thread::get_id() << std::endl;
+            runOn(threadPoolA);
+            sync_count{} << "子线程 为阻塞n个子任务==>" << std::this_thread::get_id() << std::endl;
+            std::vector<std::thread> threads;
+            for (int i = 0; i < 100; i++)
+            {
+                threads.emplace_back([i]() {
+                    sync_count{} << "执行一些任务: " << i << " ==>" << std::this_thread::get_id() << std::endl;
+                });
+            }
+            for (auto& it : threads)
+            {
+                it.join();
+            }
+            runOn(manualExecutor);
+            sync_count{} << "主线程 任务执行完毕, 刷新ui界面: " << arg << " ==>" << std::this_thread::get_id() << std::endl;
+        });
+
+        test1.start(std::string{ "执行任务" });
     }
 
     //验证主线程不阻塞

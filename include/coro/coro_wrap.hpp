@@ -43,7 +43,7 @@ namespace cw
             thisCoro() = this;
             _source = std::move(_source).resume();
             if (_yield_after_call)
-            {   
+            {
                 std::function<void()> exec = std::move(_yield_after_call);
                 exec();
             }
@@ -56,12 +56,11 @@ namespace cw
             thisCoro() = nullptr;
             _yield_after_call = std::move(fun);
             _source = std::move(_source).resume();
-            finish_callback();
         }
 
         bool isFinished()
         {
-            return !_source;
+            return _finished;
         }
 
         void setLastCallback(std::function<void()> callback)
@@ -97,6 +96,7 @@ namespace cw
         std::function<void()> _yield_after_call;
         BaseAbstractExecutor* _executor{ nullptr };
         std::function<void()> _last_call;
+        bool _finished{ false };
         std::shared_ptr<CoroutineContextBase> _prolong_life;
         friend void runOn(BaseAbstractExecutor& executor);
     };
@@ -143,6 +143,7 @@ namespace cw
                 self->_source = std::move(fiber);
                 self->_prolong_life = self;
                 self->invoke(self->_fun, tup, std::make_index_sequence<std::tuple_size_v<ArgsTup>>{});
+                self->_finished = true;
                 return std::move(self->_source);
             } };
             resume();
@@ -282,8 +283,8 @@ namespace cw
         CoroutineContextBase* coro = thisCoro();
         coro->_executor = &executor;
 
-        coro->yield([coro, &executor]() {
-            executor.post([coro]() {
+        coro->yield([coro]() {
+            coro->_executor->post([coro]() {
                 coro->resume();
             });
         });

@@ -36,14 +36,19 @@ int main()
 
     system("chcp 65001");
 
-    ctx::fiber f1{ [&](ctx::fiber&& f2) {
+    static ctx::fiber ffo;
+
+    ffo = ctx::fiber{ [&](ctx::fiber&& f2) {
         std::cout << "111" << std::endl;
-        return std::move(f2);
+        ffo = std::move(f2).resume(); //yield
+        std::cout << "333" << std::endl;
+        return std::move(ffo);
     } };
     std::cout << "000" << std::endl;
-    std::move(f1).resume();
+    ffo = std::move(ffo).resume();
     std::cout << "222" << std::endl;
-
+    ffo = std::move(ffo).resume();
+    std::cout << "444" << std::endl;
     //f1();
 
 
