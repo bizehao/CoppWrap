@@ -59,7 +59,7 @@ int main()
 
     {
         sync_count{} << "主线程: " << std::this_thread::get_id() << std::endl;
-        /*for (int i = 0; i < 5000; i++)
+        for (int i = 0; i < 5000; i++)
         {
             auto timeOut = cw::createCoroutineContext([](int sec) {
                 sync_count{} << "执行: " << std::this_thread::get_id() << std::endl;
@@ -94,7 +94,7 @@ int main()
                 });
 
             bitton.click(true);
-        }*/
+        }
 
         auto test1 = cw::createCoroutineContext([](std::string arg) {
             sync_count{} << "主线程 获取界面上的数据==>" << std::this_thread::get_id() << std::endl;
@@ -126,7 +126,7 @@ int main()
                 manualExecutor.post([]() {
                     //sync_count{} << "--" << std::endl;
                 });
-                std::this_thread::sleep_for(100ms);
+                std::this_thread::sleep_for(10ms);
             }
         }
     };

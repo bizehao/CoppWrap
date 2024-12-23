@@ -4,6 +4,7 @@
 #include "function_traits.hpp"
 #include <noboost/context/fiber.hpp>
 #include "move_wrapper.hpp"
+#include <atomic>
 
 namespace cw
 {
@@ -44,8 +45,8 @@ namespace cw
             _source = std::move(_source).resume();
             if (_yield_after_call)
             {
-                std::function<void()> exec = std::move(_yield_after_call);
-                exec();
+                _yield_after_call();
+                _yield_after_call = {};
             }
             finish_callback();
         }
@@ -58,7 +59,7 @@ namespace cw
             _source = std::move(_source).resume();
         }
 
-        bool isFinished()
+        bool isFinished() const
         {
             return _finished;
         }
@@ -96,7 +97,7 @@ namespace cw
         std::function<void()> _yield_after_call;
         BaseAbstractExecutor* _executor{ nullptr };
         std::function<void()> _last_call;
-        bool _finished{ false };
+        std::atomic_bool _finished{ false };
         std::shared_ptr<CoroutineContextBase> _prolong_life;
         friend void runOn(BaseAbstractExecutor& executor);
     };
