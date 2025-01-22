@@ -36,7 +36,7 @@ namespace cw
             throw std::runtime_error{ "currentCoro is null" };
         }
 
-        currentCoro->yield([currentCoro, &value]() {
+        currentCoro->yield([currentCoro, &value, &task]() {
             task.then([currentCoro, &value](T v) {
                 value = v;
                 if (currentCoro->getExecutor() != nullptr)

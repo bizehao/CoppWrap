@@ -12,7 +12,7 @@
 #include <cstdlib>
 #include <new>
 
-#include <boost/pool/pool.hpp>
+#include <noboost/pool/pool.hpp>
 
 #include <noboost/context/detail/config.hpp>
 #include <noboost/context/stack_context.hpp>
